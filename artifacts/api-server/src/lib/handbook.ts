@@ -1,3 +1,4 @@
+import { ReplitConnectors } from "@replit/connectors-sdk";
 import { logger } from "./logger";
 
 const GOOGLE_DOC_ID = "1KF52xpcvrJBWA-LJbIZs4LGwWa-sW9IR5AeLjey4LgE";
@@ -53,24 +54,78 @@ function parseDocIntoSections(text: string): HandbookSection[] {
   return sections.filter((s) => s.content.length > 20);
 }
 
-export async function fetchHandbook(): Promise<HandbookCache> {
-  const exportUrl = `https://docs.google.com/document/d/${GOOGLE_DOC_ID}/export?format=txt`;
-  const resp = await fetch(exportUrl);
-  if (!resp.ok) {
-    throw new Error(`Failed to fetch handbook: ${resp.status} ${resp.statusText}`);
-  }
-  const text = await resp.text();
-  const firstLine = text.split("\n").find((l) => l.trim().length > 0) ?? "Team Handbook";
-  const documentTitle = firstLine.trim().slice(0, 100);
+function extractTextFromGoogleDoc(doc: any): string {
+  const lines: string[] = [];
 
-  const sections = parseDocIntoSections(text);
-  logger.info({ sectionCount: sections.length }, "Handbook fetched and parsed");
+  if (doc.title) {
+    lines.push(doc.title);
+    lines.push("");
+  }
+
+  const body = doc.body?.content ?? [];
+  for (const element of body) {
+    if (element.paragraph) {
+      const para = element.paragraph;
+      const style = para.paragraphStyle?.namedStyleType ?? "";
+      const text = (para.elements ?? [])
+        .map((e: any) => e.textRun?.content ?? "")
+        .join("")
+        .trimEnd();
+
+      if (!text.trim()) {
+        lines.push("");
+        continue;
+      }
+
+      if (style.startsWith("HEADING_")) {
+        lines.push(text);
+      } else {
+        lines.push(text);
+      }
+    } else if (element.table) {
+      for (const row of element.table.tableRows ?? []) {
+        const cells = (row.tableCells ?? []).map((cell: any) =>
+          (cell.content ?? [])
+            .flatMap((c: any) =>
+              (c.paragraph?.elements ?? []).map((e: any) => e.textRun?.content ?? "")
+            )
+            .join("")
+            .trim()
+        );
+        lines.push(cells.join(" | "));
+      }
+    }
+  }
+
+  return lines.join("\n");
+}
+
+export async function fetchHandbook(): Promise<HandbookCache> {
+  const connectors = new ReplitConnectors();
+
+  const response = await connectors.proxy(
+    "google-docs",
+    `/v1/documents/${GOOGLE_DOC_ID}`,
+    { method: "GET" }
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Failed to fetch handbook: ${response.status} ${body}`);
+  }
+
+  const doc = await response.json();
+  const rawText = extractTextFromGoogleDoc(doc);
+  const documentTitle = (doc.title ?? "Team Handbook").slice(0, 100);
+  const sections = parseDocIntoSections(rawText);
+
+  logger.info({ sectionCount: sections.length, documentTitle }, "Handbook fetched via Google Docs API");
 
   const result: HandbookCache = {
     sections,
     documentTitle,
     fetchedAt: new Date(),
-    rawText: text,
+    rawText,
   };
   cache = result;
   return result;
