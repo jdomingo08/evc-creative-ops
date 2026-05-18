@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, conversations } from "@workspace/db";
+import { db, conversations, messages } from "@workspace/db";
 import { createRealtimeSession } from "@workspace/integrations-openai-ai-server";
 import { getRealtimeModel } from "../../lib/realtime-model";
 import { logger } from "../../lib/logger";
@@ -60,6 +60,74 @@ router.post(
         reason: err instanceof Error ? err.message : String(err),
       });
     }
+  },
+);
+
+router.post(
+  "/openai/conversations/:id/realtime/transcript",
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      res.status(400).json({ error: "Invalid conversation id" });
+      return;
+    }
+
+    const body = req.body as {
+      userText?: unknown;
+      assistantText?: unknown;
+      citation?: unknown;
+    };
+
+    if (
+      typeof body.userText !== "string" ||
+      body.userText.length === 0 ||
+      typeof body.assistantText !== "string" ||
+      body.assistantText.length === 0 ||
+      (body.citation !== null && typeof body.citation !== "string")
+    ) {
+      res.status(400).json({ error: "Invalid request body" });
+      return;
+    }
+
+    const [conv] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, id));
+
+    if (!conv) {
+      res.status(404).json({ error: "Conversation not found" });
+      return;
+    }
+
+    const [userRow] = await db
+      .insert(messages)
+      .values({
+        conversationId: id,
+        role: "user",
+        content: body.userText,
+        citation: null,
+      })
+      .returning({ id: messages.id });
+
+    const [assistantRow] = await db
+      .insert(messages)
+      .values({
+        conversationId: id,
+        role: "assistant",
+        content: body.assistantText,
+        citation: body.citation,
+      })
+      .returning({ id: messages.id });
+
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, id));
+
+    res.status(201).json({
+      userMessageId: userRow.id,
+      assistantMessageId: assistantRow.id,
+    });
   },
 );
 

@@ -89,3 +89,42 @@ describe("POST /openai/conversations/:id/realtime/session", () => {
     expect(res.body.reason).toMatch(/invalid_request/);
   });
 });
+
+describe("POST /openai/conversations/:id/realtime/transcript", () => {
+  it("returns 400 on missing required fields", async () => {
+    const res = await request(app)
+      .post("/api/openai/conversations/1/realtime/transcript")
+      .send({ userText: "", assistantText: "", citation: null });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when conversation does not exist", async () => {
+    mockDb.where.mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .post("/api/openai/conversations/999/realtime/transcript")
+      .send({ userText: "hi", assistantText: "hello", citation: null });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("inserts both rows and returns their ids", async () => {
+    mockDb.where.mockResolvedValueOnce([{ id: 1, title: "t" }]);
+    mockDb.returning
+      .mockResolvedValueOnce([{ id: 100 }])
+      .mockResolvedValueOnce([{ id: 101 }]);
+
+    const res = await request(app)
+      .post("/api/openai/conversations/1/realtime/transcript")
+      .send({
+        userText: "What is the turnaround policy?",
+        assistantText: "Per the handbook, 48 hours.",
+        citation: "Turnaround Policy",
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.userMessageId).toBe(100);
+    expect(res.body.assistantMessageId).toBe(101);
+  });
+});
