@@ -226,6 +226,99 @@ paths:
               schema:
                 $ref: "#/components/schemas/HandbookStatus"
 
+  /openai/conversations/{id}/realtime/session:
+    post:
+      operationId: createOpenaiRealtimeSession
+      tags: [openai]
+      summary: Mint a Realtime API ephemeral session token
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ephemeral session minted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiRealtimeSession"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiError"
+        "500":
+          description: OpenAI session mint failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiError"
+
+  /openai/conversations/{id}/realtime/transcript:
+    post:
+      operationId: persistOpenaiRealtimeTranscript
+      tags: [openai]
+      summary: Persist a completed realtime turn
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenaiRealtimeTranscriptInput"
+      responses:
+        "201":
+          description: Turn persisted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiRealtimeTranscriptResult"
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiError"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiError"
+
+  /openai/handbook/lookup:
+    post:
+      operationId: lookupHandbookSection
+      tags: [openai]
+      summary: Look up the most relevant handbook section for a query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HandbookLookupInput"
+      responses:
+        "200":
+          description: Best-matching section or empty result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandbookLookupResult"
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiError"
+
 components:
   schemas:
     HealthStatus:
@@ -361,3 +454,68 @@ components:
           type: string
       required:
         - error
+
+    OpenaiRealtimeSession:
+      type: object
+      properties:
+        ephemeralKey:
+          type: string
+        sessionId:
+          type: string
+        model:
+          type: string
+        expiresAt:
+          type: integer
+          description: Unix epoch seconds when the token expires
+      required:
+        - ephemeralKey
+        - sessionId
+        - model
+        - expiresAt
+
+    OpenaiRealtimeTranscriptInput:
+      type: object
+      properties:
+        userText:
+          type: string
+          minLength: 1
+        assistantText:
+          type: string
+          minLength: 1
+        citation:
+          type: ["string", "null"]
+      required:
+        - userText
+        - assistantText
+        - citation
+
+    OpenaiRealtimeTranscriptResult:
+      type: object
+      properties:
+        userMessageId:
+          type: integer
+        assistantMessageId:
+          type: integer
+      required:
+        - userMessageId
+        - assistantMessageId
+
+    HandbookLookupInput:
+      type: object
+      properties:
+        query:
+          type: string
+          minLength: 1
+      required:
+        - query
+
+    HandbookLookupResult:
+      type: object
+      properties:
+        heading:
+          type: ["string", "null"]
+        content:
+          type: string
+      required:
+        - heading
+        - content
