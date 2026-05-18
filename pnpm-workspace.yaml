@@ -65,6 +65,11 @@ catalog:
   vite: ^7.3.2
   wouter: ^3.3.5
   zod: ^3.25.76
+  '@testing-library/dom': ^10.0.0
+  '@testing-library/react': ^16.0.0
+  '@vitest/coverage-v8': ^3.0.0
+  jsdom: ^25.0.0
+  vitest: ^3.0.0
 
 autoInstallPeers: false
 
@@ -143,8 +148,8 @@ overrides:
   "rollup>@rollup/rollup-openharmony-arm64": "-"
   "rollup>@rollup/rollup-win32-arm64-msvc": "-"
   "rollup>@rollup/rollup-win32-ia32-msvc": "-"
-  "rollup>@rollup/rollup-win32-x64-gnu": "-"
-  "rollup>@rollup/rollup-win32-x64-msvc": "-"
+  # "rollup>@rollup/rollup-win32-x64-gnu": "-"  # re-enabled for Windows dev (vitest needs this)
+  # "rollup>@rollup/rollup-win32-x64-msvc": "-"  # re-enabled for Windows dev (vitest needs this)
   "@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32": "-"

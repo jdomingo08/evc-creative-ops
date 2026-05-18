@@ -113,7 +113,7 @@ ${handbookContext}`;
   let fullResponse = "";
 
   const stream = await openai.chat.completions.create({
-    model: "gpt-5.4",
+    model: "gpt-4o-mini",
     max_completion_tokens: 8192,
     messages: chatMessages,
     stream: true,
@@ -178,9 +178,11 @@ router.post("/openai/conversations/:id/voice-messages", async (req, res): Promis
   res.setHeader("Connection", "keep-alive");
 
   try {
+    const audioBytes = new Uint8Array(compatBuffer.byteLength);
+    audioBytes.set(compatBuffer);
     const transcriptionResp = await openai.audio.transcriptions.create({
       model: "gpt-4o-mini-transcribe",
-      file: new File([compatBuffer], `audio.${format}`, { type: `audio/${format}` }),
+      file: new File([audioBytes], `audio.${format}`, { type: `audio/${format}` }),
       response_format: "json",
     });
     userTranscript = transcriptionResp.text;
@@ -216,7 +218,7 @@ ${handbookContext}`;
     ];
 
     const textStream = await openai.chat.completions.create({
-      model: "gpt-5.4",
+      model: "gpt-4o-mini",
       max_completion_tokens: 2048,
       messages: chatMessages,
       stream: true,

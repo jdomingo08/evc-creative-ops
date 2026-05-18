@@ -152,3 +152,52 @@ export const RefreshHandbookResponse = zod.object({
 })
 
 
+/**
+ * @summary Mint a Realtime API ephemeral session token
+ */
+export const CreateOpenaiRealtimeSessionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateOpenaiRealtimeSessionResponse = zod.object({
+  "ephemeralKey": zod.string(),
+  "sessionId": zod.string(),
+  "model": zod.string(),
+  "expiresAt": zod.number().describe('Unix epoch seconds when the token expires')
+})
+
+
+/**
+ * @summary Persist a completed realtime turn
+ */
+export const PersistOpenaiRealtimeTranscriptParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+export const PersistOpenaiRealtimeTranscriptBody = zod.object({
+  "userText": zod.string().min(1),
+  "assistantText": zod.string().min(1),
+  "citation": zod.string().nullable()
+})
+
+
+/**
+ * @summary Look up the most relevant handbook section for a query
+ */
+
+
+
+export const LookupHandbookSectionBody = zod.object({
+  "query": zod.string().min(1)
+})
+
+export const LookupHandbookSectionResponse = zod.object({
+  "heading": zod.string().nullable(),
+  "content": zod.string()
+})
+
+

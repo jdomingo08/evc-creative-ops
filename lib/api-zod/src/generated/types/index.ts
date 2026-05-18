@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './handbookLookupInput';
+export * from './handbookLookupResult';
 export * from './handbookStatus';
 export * from './healthStatus';
 export * from './openaiConversation';
@@ -15,4 +17,7 @@ export * from './openaiConversationWithMessages';
 export * from './openaiError';
 export * from './openaiMessage';
 export * from './openaiMessageInput';
+export * from './openaiRealtimeSession';
+export * from './openaiRealtimeTranscriptInput';
+export * from './openaiRealtimeTranscriptResult';
 export * from './openaiVoiceMessageInput';
