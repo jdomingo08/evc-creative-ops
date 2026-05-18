@@ -20,6 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  HandbookLookupInput,
+  HandbookLookupResult,
   HandbookStatus,
   HealthStatus,
   OpenaiConversation,
@@ -29,6 +31,9 @@ import type {
   OpenaiError,
   OpenaiMessage,
   OpenaiMessageInput,
+  OpenaiRealtimeSession,
+  OpenaiRealtimeTranscriptInput,
+  OpenaiRealtimeTranscriptResult,
   OpenaiVoiceMessageInput
 } from './api.schemas';
 
@@ -856,5 +861,218 @@ export const useRefreshHandbook = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getRefreshHandbookMutationOptions(options));
+    }
+
+export const getCreateOpenaiRealtimeSessionUrl = (id: number,) => {
+
+
+
+
+  return `/api/openai/conversations/${id}/realtime/session`
+}
+
+/**
+ * @summary Mint a Realtime API ephemeral session token
+ */
+export const createOpenaiRealtimeSession = async (id: number, options?: RequestInit): Promise<OpenaiRealtimeSession> => {
+
+  return customFetch<OpenaiRealtimeSession>(getCreateOpenaiRealtimeSessionUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateOpenaiRealtimeSessionMutationOptions = <TError = ErrorType<OpenaiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOpenaiRealtimeSession>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createOpenaiRealtimeSession>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['createOpenaiRealtimeSession'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOpenaiRealtimeSession>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  createOpenaiRealtimeSession(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateOpenaiRealtimeSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createOpenaiRealtimeSession>>>
+
+    export type CreateOpenaiRealtimeSessionMutationError = ErrorType<OpenaiError>
+
+    /**
+ * @summary Mint a Realtime API ephemeral session token
+ */
+export const useCreateOpenaiRealtimeSession = <TError = ErrorType<OpenaiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOpenaiRealtimeSession>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createOpenaiRealtimeSession>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getCreateOpenaiRealtimeSessionMutationOptions(options));
+    }
+
+export const getPersistOpenaiRealtimeTranscriptUrl = (id: number,) => {
+
+
+
+
+  return `/api/openai/conversations/${id}/realtime/transcript`
+}
+
+/**
+ * @summary Persist a completed realtime turn
+ */
+export const persistOpenaiRealtimeTranscript = async (id: number,
+    openaiRealtimeTranscriptInput: OpenaiRealtimeTranscriptInput, options?: RequestInit): Promise<OpenaiRealtimeTranscriptResult> => {
+
+  return customFetch<OpenaiRealtimeTranscriptResult>(getPersistOpenaiRealtimeTranscriptUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      openaiRealtimeTranscriptInput,)
+  }
+);}
+
+
+
+
+export const getPersistOpenaiRealtimeTranscriptMutationOptions = <TError = ErrorType<OpenaiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof persistOpenaiRealtimeTranscript>>, TError,{id: number;data: BodyType<OpenaiRealtimeTranscriptInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof persistOpenaiRealtimeTranscript>>, TError,{id: number;data: BodyType<OpenaiRealtimeTranscriptInput>}, TContext> => {
+
+const mutationKey = ['persistOpenaiRealtimeTranscript'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof persistOpenaiRealtimeTranscript>>, {id: number;data: BodyType<OpenaiRealtimeTranscriptInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  persistOpenaiRealtimeTranscript(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PersistOpenaiRealtimeTranscriptMutationResult = NonNullable<Awaited<ReturnType<typeof persistOpenaiRealtimeTranscript>>>
+    export type PersistOpenaiRealtimeTranscriptMutationBody = BodyType<OpenaiRealtimeTranscriptInput>
+    export type PersistOpenaiRealtimeTranscriptMutationError = ErrorType<OpenaiError>
+
+    /**
+ * @summary Persist a completed realtime turn
+ */
+export const usePersistOpenaiRealtimeTranscript = <TError = ErrorType<OpenaiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof persistOpenaiRealtimeTranscript>>, TError,{id: number;data: BodyType<OpenaiRealtimeTranscriptInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof persistOpenaiRealtimeTranscript>>,
+        TError,
+        {id: number;data: BodyType<OpenaiRealtimeTranscriptInput>},
+        TContext
+      > => {
+      return useMutation(getPersistOpenaiRealtimeTranscriptMutationOptions(options));
+    }
+
+export const getLookupHandbookSectionUrl = () => {
+
+
+
+
+  return `/api/openai/handbook/lookup`
+}
+
+/**
+ * @summary Look up the most relevant handbook section for a query
+ */
+export const lookupHandbookSection = async (handbookLookupInput: HandbookLookupInput, options?: RequestInit): Promise<HandbookLookupResult> => {
+
+  return customFetch<HandbookLookupResult>(getLookupHandbookSectionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      handbookLookupInput,)
+  }
+);}
+
+
+
+
+export const getLookupHandbookSectionMutationOptions = <TError = ErrorType<OpenaiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lookupHandbookSection>>, TError,{data: BodyType<HandbookLookupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof lookupHandbookSection>>, TError,{data: BodyType<HandbookLookupInput>}, TContext> => {
+
+const mutationKey = ['lookupHandbookSection'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof lookupHandbookSection>>, {data: BodyType<HandbookLookupInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  lookupHandbookSection(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LookupHandbookSectionMutationResult = NonNullable<Awaited<ReturnType<typeof lookupHandbookSection>>>
+    export type LookupHandbookSectionMutationBody = BodyType<HandbookLookupInput>
+    export type LookupHandbookSectionMutationError = ErrorType<OpenaiError>
+
+    /**
+ * @summary Look up the most relevant handbook section for a query
+ */
+export const useLookupHandbookSection = <TError = ErrorType<OpenaiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lookupHandbookSection>>, TError,{data: BodyType<HandbookLookupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof lookupHandbookSection>>,
+        TError,
+        {data: BodyType<HandbookLookupInput>},
+        TContext
+      > => {
+      return useMutation(getLookupHandbookSectionMutationOptions(options));
     }
 

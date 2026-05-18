@@ -64,3 +64,36 @@ export interface OpenaiError {
   error: string;
 }
 
+export interface OpenaiRealtimeSession {
+  ephemeralKey: string;
+  sessionId: string;
+  model: string;
+  /** Unix epoch seconds when the token expires */
+  expiresAt: number;
+}
+
+export interface OpenaiRealtimeTranscriptInput {
+  /** @minLength 1 */
+  userText: string;
+  /** @minLength 1 */
+  assistantText: string;
+  /** @nullable */
+  citation: string | null;
+}
+
+export interface OpenaiRealtimeTranscriptResult {
+  userMessageId: number;
+  assistantMessageId: number;
+}
+
+export interface HandbookLookupInput {
+  /** @minLength 1 */
+  query: string;
+}
+
+export interface HandbookLookupResult {
+  /** @nullable */
+  heading: string | null;
+  content: string;
+}
+
