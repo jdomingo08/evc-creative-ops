@@ -89,6 +89,17 @@ describe("POST /openai/conversations/:id/realtime/session", () => {
     expect(res.status).toBe(500);
     expect(res.body.reason).toMatch(/invalid_request/);
   });
+
+  it("returns 503 when realtime model is not resolved", async () => {
+    mockDb.where.mockResolvedValueOnce([{ id: 1, title: "t" }]);
+    const { getRealtimeModel } = await import("../../lib/realtime-model");
+    vi.mocked(getRealtimeModel).mockImplementationOnce(() => {
+      throw new Error("Realtime model has not been resolved yet.");
+    });
+
+    const res = await request(app).post("/api/openai/conversations/1/realtime/session").send({});
+    expect(res.status).toBe(503);
+  });
 });
 
 describe("POST /openai/conversations/:id/realtime/transcript", () => {

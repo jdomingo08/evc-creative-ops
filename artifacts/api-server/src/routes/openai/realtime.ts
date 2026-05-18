@@ -47,9 +47,19 @@ router.post(
       return;
     }
 
+    let model: string;
+    try {
+      model = getRealtimeModel();
+    } catch (err) {
+      res.status(503).json({
+        reason: "Realtime model not resolved at startup. Check server logs.",
+      });
+      return;
+    }
+
     try {
       const session = await createRealtimeSession({
-        model: getRealtimeModel(),
+        model,
         voice: "alloy",
         instructions: SYSTEM_INSTRUCTIONS,
         tools: [HANDBOOK_TOOL_DEFINITION],
