@@ -4,13 +4,13 @@ A web app for a creative production team to chat with their Google Doc handbook 
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
-- `pnpm --filter @workspace/handbook-chat run dev` — run the frontend (port 24004)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (binds to `PORT` env; Replit sets this automatically)
+- `pnpm --filter @workspace/handbook-chat run dev` — run the frontend (binds to `PORT` env; also requires `BASE_PATH` or `VITE_BASE_URL` set by Replit's artifact routing)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string (auto-set by Replit PostgreSQL integration)
 
 ## Stack
 
@@ -47,7 +47,7 @@ A web app for a creative production team to chat with their Google Doc handbook 
 - **Push-to-talk voice** — hold the mic button, speak your question, hear the answer spoken back.
 - **Conversation history** — sidebar lists all past conversations ordered by recency; conversations can be deleted.
 - **Always-fresh handbook** — 60s cache TTL plus a manual refresh button ensures answers always reflect the latest version of the Google Doc.
-- **53 handbook sections** parsed from "Creative Operations Producer Handbook".
+- **Handbook sections parsed dynamically** from "Creative Operations Producer Handbook" on each refresh (section count reflects current doc structure).
 
 ## User preferences
 
