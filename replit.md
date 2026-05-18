@@ -10,7 +10,9 @@ A web app for a creative production team to chat with their Google Doc handbook 
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string (auto-set by Replit PostgreSQL integration)
+- Required env:
+  - `DATABASE_URL` — Postgres connection string (auto-set by Replit PostgreSQL integration)
+  - `OPENAI_API_KEY` — your OpenAI API key; calls go directly to `api.openai.com`
 
 ## Stack
 
