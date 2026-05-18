@@ -4,6 +4,7 @@ import { db, conversations, messages } from "@workspace/db";
 import { createRealtimeSession } from "@workspace/integrations-openai-ai-server";
 import { getRealtimeModel } from "../../lib/realtime-model";
 import { logger } from "../../lib/logger";
+import { getHandbook, findRelevantSections } from "../../lib/handbook";
 
 const router: IRouter = Router();
 
@@ -128,6 +129,33 @@ router.post(
       userMessageId: userRow.id,
       assistantMessageId: assistantRow.id,
     });
+  },
+);
+
+router.post(
+  "/openai/handbook/lookup",
+  async (req, res): Promise<void> => {
+    const body = req.body as { query?: unknown };
+    if (typeof body.query !== "string" || body.query.length === 0) {
+      res.status(400).json({ error: "Invalid query" });
+      return;
+    }
+
+    try {
+      const handbook = await getHandbook();
+      const sections = findRelevantSections(handbook.sections, body.query, 1);
+      if (sections.length === 0) {
+        res.status(200).json({ heading: null, content: "" });
+        return;
+      }
+      res.status(200).json({
+        heading: sections[0].heading,
+        content: sections[0].content,
+      });
+    } catch (err) {
+      req.log.error({ err }, "Handbook lookup failed");
+      res.status(500).json({ error: "Handbook unavailable" });
+    }
   },
 );
 

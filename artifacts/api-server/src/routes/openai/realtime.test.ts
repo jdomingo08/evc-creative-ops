@@ -43,6 +43,7 @@ vi.mock("../../lib/realtime-model", () => ({
 
 import { createRealtimeSession } from "@workspace/integrations-openai-ai-server";
 import { db } from "@workspace/db";
+import { findRelevantSections, getHandbook } from "../../lib/handbook";
 import app from "../../app";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,5 +127,48 @@ describe("POST /openai/conversations/:id/realtime/transcript", () => {
     expect(res.status).toBe(201);
     expect(res.body.userMessageId).toBe(100);
     expect(res.body.assistantMessageId).toBe(101);
+  });
+});
+
+describe("POST /openai/handbook/lookup", () => {
+  it("returns 400 on empty query", async () => {
+    const res = await request(app).post("/api/openai/handbook/lookup").send({ query: "" });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns empty result when nothing matches", async () => {
+    vi.mocked(getHandbook).mockResolvedValueOnce({
+      sections: [],
+      documentTitle: "",
+      fetchedAt: new Date(),
+      rawText: "",
+    });
+    vi.mocked(findRelevantSections).mockReturnValueOnce([]);
+
+    const res = await request(app).post("/api/openai/handbook/lookup").send({ query: "anything" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.heading).toBeNull();
+    expect(res.body.content).toBe("");
+  });
+
+  it("returns the top match", async () => {
+    vi.mocked(getHandbook).mockResolvedValueOnce({
+      sections: [],
+      documentTitle: "",
+      fetchedAt: new Date(),
+      rawText: "",
+    });
+    vi.mocked(findRelevantSections).mockReturnValueOnce([
+      { heading: "Turnaround Policy", content: "48 hours standard." },
+    ]);
+
+    const res = await request(app)
+      .post("/api/openai/handbook/lookup")
+      .send({ query: "what is the turnaround?" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.heading).toBe("Turnaround Policy");
+    expect(res.body.content).toBe("48 hours standard.");
   });
 });
