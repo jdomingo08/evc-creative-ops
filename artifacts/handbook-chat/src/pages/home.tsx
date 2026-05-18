@@ -14,12 +14,11 @@ import {
   getGetHandbookStatusQueryKey
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageSquare, Trash2, Edit2, Loader2, Search, Mic, StopCircle, ArrowUp, RefreshCw, AlertCircle } from "lucide-react";
+import { Plus, MessageSquare, Trash2, Edit2, Loader2, Search, ArrowUp, RefreshCw, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
-import { useVoiceRecorder, useVoiceStream } from "@workspace/integrations-openai-ai-react/audio";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -50,7 +49,7 @@ export default function Home() {
         onSelect={setActiveConversationId}
         onNew={handleNewChat}
         isLoading={isLoadingConvos}
-        onDelete={(id) => {
+        onDelete={(id: number) => {
           deleteConversation.mutate({ id }, {
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: getListOpenaiConversationsQueryKey() });
@@ -177,29 +176,7 @@ function ActiveChat({ conversationId }: { conversationId: number }) {
     }
   }, [messages, streamedContent]);
 
-  // Voice Hook Integration
-  const workletPath = import.meta.env.BASE_URL + "audio-playback-worklet.js";
-  const [transcript, setTranscript] = useState("");
-  const voiceStream = useVoiceStream({
-    workletPath,
-    onTranscript: (_, full) => setTranscript(full),
-    onComplete: () => {
-      queryClient.invalidateQueries({ queryKey: getListOpenaiMessagesQueryKey(conversationId) });
-    }
-  });
-
-  const { startRecording, stopRecording, isRecording } = useVoiceRecorder({
-    onAudioComplete: async (blob) => {
-      try {
-        await voiceStream.streamVoiceResponse(
-          `/api/openai/conversations/${conversationId}/voice-messages`,
-          blob
-        );
-      } catch (err) {
-        console.error("Voice err:", err);
-      }
-    }
-  });
+  // Voice UI is being rewritten on top of OpenAI Realtime; baseline removed pending Task 13.
 
   const handleSendText = async () => {
     if (!inputValue.trim() || isStreamingText) return;
@@ -276,14 +253,8 @@ function ActiveChat({ conversationId }: { conversationId: number }) {
           ))}
           
           {isStreamingText && (
-            <MessageBubble 
-              message={{ role: "assistant", content: streamedContent, citation: streamedCitation, isStreaming: true }} 
-            />
-          )}
-          
-          {voiceStream.isPlaying && (
-            <MessageBubble 
-              message={{ role: "assistant", content: transcript || "Listening...", isStreaming: true }} 
+            <MessageBubble
+              message={{ role: "assistant", content: streamedContent, citation: streamedCitation, isStreaming: true }}
             />
           )}
         </div>
@@ -293,25 +264,8 @@ function ActiveChat({ conversationId }: { conversationId: number }) {
         <div className="max-w-3xl mx-auto relative group">
           <div className="absolute -inset-0.5 bg-primary/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
           <div className="relative bg-secondary/80 backdrop-blur border border-border rounded-xl p-2 flex items-end gap-2 focus-within:border-primary/50 transition-colors">
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-10 w-10 shrink-0 rounded-lg transition-all duration-300",
-                isRecording ? "bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive" : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-              )}
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onMouseLeave={() => isRecording && stopRecording()}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
-              data-testid="btn-mic"
-            >
-              {isRecording ? <div className="h-3 w-3 rounded-full bg-destructive animate-pulse" /> : <Mic className="h-5 w-5" />}
-            </Button>
 
-            <Textarea 
+            <Textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -322,7 +276,7 @@ function ActiveChat({ conversationId }: { conversationId: number }) {
 
             <Button
               size="icon"
-              disabled={!inputValue.trim() || isStreamingText || voiceStream.isPlaying}
+              disabled={!inputValue.trim() || isStreamingText}
               onClick={handleSendText}
               className="h-10 w-10 shrink-0 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all"
             >

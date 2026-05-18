@@ -178,9 +178,11 @@ router.post("/openai/conversations/:id/voice-messages", async (req, res): Promis
   res.setHeader("Connection", "keep-alive");
 
   try {
+    const audioBytes = new Uint8Array(compatBuffer.byteLength);
+    audioBytes.set(compatBuffer);
     const transcriptionResp = await openai.audio.transcriptions.create({
       model: "gpt-4o-mini-transcribe",
-      file: new File([compatBuffer], `audio.${format}`, { type: `audio/${format}` }),
+      file: new File([audioBytes], `audio.${format}`, { type: `audio/${format}` }),
       response_format: "json",
     });
     userTranscript = transcriptionResp.text;

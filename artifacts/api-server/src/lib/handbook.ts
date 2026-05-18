@@ -114,7 +114,7 @@ export async function fetchHandbook(): Promise<HandbookCache> {
     throw new Error(`Failed to fetch handbook: ${response.status} ${body}`);
   }
 
-  const doc = await response.json();
+  const doc = (await response.json()) as { title?: string };
   const rawText = extractTextFromGoogleDoc(doc);
   const documentTitle = (doc.title ?? "Team Handbook").slice(0, 100);
   const sections = parseDocIntoSections(rawText);
