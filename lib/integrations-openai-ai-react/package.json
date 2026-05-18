@@ -10,7 +10,16 @@
   "peerDependencies": {
     "react": ">=18"
   },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
   "devDependencies": {
-    "@types/react": "catalog:"
+    "@testing-library/dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "jsdom": "catalog:",
+    "vitest": "catalog:"
   }
 }
