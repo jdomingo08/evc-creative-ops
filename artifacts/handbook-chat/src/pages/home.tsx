@@ -13,8 +13,9 @@ import {
   getListOpenaiMessagesQueryKey,
   getGetHandbookStatusQueryKey
 } from "@workspace/api-client-react";
+import { useRealtimeSession } from "@workspace/integrations-openai-ai-react";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageSquare, Trash2, Edit2, Loader2, Search, ArrowUp, RefreshCw, AlertCircle } from "lucide-react";
+import { Plus, MessageSquare, Trash2, Edit2, Loader2, Search, ArrowUp, RefreshCw, AlertCircle, Mic, MicOff } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -169,14 +170,13 @@ function ActiveChat({ conversationId }: { conversationId: number }) {
   const [streamedCitation, setStreamedCitation] = useState<string | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+  const voice = useRealtimeSession(conversationId);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, streamedContent]);
-
-  // Voice UI is being rewritten on top of OpenAI Realtime; baseline removed pending Task 13.
 
   const handleSendText = async () => {
     if (!inputValue.trim() || isStreamingText) return;
@@ -259,6 +259,79 @@ function ActiveChat({ conversationId }: { conversationId: number }) {
           )}
         </div>
       </ScrollArea>
+
+      {/* Realtime voice block */}
+      <div className="border-t border-border/40 px-4 py-2 flex items-center gap-3 shrink-0 z-10 bg-background/60">
+        {voice.state === "idle" || voice.state === "error" ? (
+          <Button
+            type="button"
+            onClick={() => voice.connect()}
+            size="sm"
+            variant="default"
+            data-testid="btn-start-voice"
+          >
+            <Mic className="h-4 w-4 mr-1" />
+            Start voice
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={voice.disconnect}
+            size="sm"
+            variant="secondary"
+            data-testid="btn-stop-voice"
+          >
+            <MicOff className="h-4 w-4 mr-1" />
+            Stop voice
+          </Button>
+        )}
+
+        {(voice.state === "ready" ||
+          voice.state === "listening" ||
+          voice.state === "thinking" ||
+          voice.state === "responding") && (
+          <Button
+            type="button"
+            onMouseDown={voice.startSpeaking}
+            onMouseUp={voice.stopSpeaking}
+            onMouseLeave={() => {
+              if (voice.state === "listening") voice.stopSpeaking();
+            }}
+            onTouchStart={voice.startSpeaking}
+            onTouchEnd={voice.stopSpeaking}
+            disabled={voice.state !== "ready" && voice.state !== "listening"}
+            size="sm"
+            variant={voice.state === "listening" ? "destructive" : "outline"}
+            data-testid="btn-hold-to-talk"
+          >
+            {voice.state === "listening" ? "Listening… release to send" : "Hold to talk"}
+          </Button>
+        )}
+
+        <span className="text-xs text-muted-foreground">
+          {voice.state === "connecting" && "Connecting…"}
+          {voice.state === "thinking" && "Thinking…"}
+          {voice.state === "responding" && "Speaking…"}
+          {voice.state === "error" && (voice.error?.message ?? "Error")}
+        </span>
+      </div>
+
+      {(voice.userTranscript || voice.assistantTranscript) && (
+        <div className="px-4 py-2 text-sm space-y-1 shrink-0 z-10 bg-background/60 border-t border-border/40">
+          {voice.userTranscript && (
+            <div>
+              <span className="font-medium text-foreground">You: </span>
+              <span className="text-muted-foreground">{voice.userTranscript}</span>
+            </div>
+          )}
+          {voice.assistantTranscript && (
+            <div>
+              <span className="font-medium text-foreground">Assistant: </span>
+              <span className="text-muted-foreground">{voice.assistantTranscript}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="p-4 md:p-6 shrink-0 z-10 bg-gradient-to-t from-background via-background to-transparent pt-10">
         <div className="max-w-3xl mx-auto relative group">
