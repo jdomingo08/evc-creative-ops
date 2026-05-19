@@ -37,6 +37,9 @@ export function useRealtimeSession(conversationId: number): UseRealtimeSessionRe
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const turnInProgressRef = useRef(false);
   const mountedRef = useRef(true);
+  // Tracks the heading of the most recent successful lookup_handbook call in the current turn.
+  // Reset on each startSpeaking; persisted to the assistant message at response.done.
+  const lastCitationRef = useRef<string | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -142,6 +145,9 @@ export function useRealtimeSession(conversationId: number): UseRealtimeSessionRe
           } catch {
             lookup = { heading: null, content: "" };
           }
+          if (lookup.heading) {
+            lastCitationRef.current = lookup.heading;
+          }
           dataChannelRef.current?.send(
             JSON.stringify({
               type: "conversation.item.create",
@@ -158,10 +164,11 @@ export function useRealtimeSession(conversationId: number): UseRealtimeSessionRe
         case "response.done": {
           turnInProgressRef.current = false;
           dispatch({ type: "response-done" });
+          const citation = lastCitationRef.current;
           queueMicrotask(() => {
             setAssistantTranscript((aText) => {
               setUserTranscript((uText) => {
-                void persistTurn(uText, aText, null);
+                void persistTurn(uText, aText, citation);
                 return uText;
               });
               return aText;
@@ -260,6 +267,7 @@ export function useRealtimeSession(conversationId: number): UseRealtimeSessionRe
     if (!localTrackRef.current) return;
     setUserTranscript("");
     setAssistantTranscript("");
+    lastCitationRef.current = null;
     localTrackRef.current.enabled = true;
     turnInProgressRef.current = true;
     dispatch({ type: "start-speaking" });
