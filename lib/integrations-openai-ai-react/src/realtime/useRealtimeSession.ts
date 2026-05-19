@@ -5,7 +5,7 @@ import {
   type RealtimeState,
 } from "./state-machine";
 
-const OPENAI_REALTIME_URL = "https://api.openai.com/v1/realtime";
+const OPENAI_REALTIME_CALLS_URL = "https://api.openai.com/v1/realtime/calls";
 
 interface SessionCreateResponse {
   ephemeralKey: string;
@@ -236,7 +236,7 @@ export function useRealtimeSession(conversationId: number): UseRealtimeSessionRe
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const sdpRes = await fetch(`${OPENAI_REALTIME_URL}?model=${encodeURIComponent(session.model)}`, {
+      const sdpRes = await fetch(OPENAI_REALTIME_CALLS_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.ephemeralKey}`,
