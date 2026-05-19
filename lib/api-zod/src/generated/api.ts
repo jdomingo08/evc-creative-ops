@@ -118,18 +118,6 @@ export const SendOpenaiMessageBody = zod.object({
 
 
 /**
- * @summary Send audio and receive a streaming voice+text response
- */
-export const SendOpenaiVoiceMessageParams = zod.object({
-  "id": zod.coerce.number()
-})
-
-export const SendOpenaiVoiceMessageBody = zod.object({
-  "audio": zod.string().describe('Base64-encoded audio data')
-})
-
-
-/**
  * Returns when the handbook was last fetched and its section count
  * @summary Get handbook freshness status
  */

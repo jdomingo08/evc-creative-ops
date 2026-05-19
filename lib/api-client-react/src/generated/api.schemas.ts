@@ -46,11 +46,6 @@ export interface OpenaiMessageInput {
   content: string;
 }
 
-export interface OpenaiVoiceMessageInput {
-  /** Base64-encoded audio data */
-  audio: string;
-}
-
 export interface HandbookStatus {
   /** @nullable */
   lastFetchedAt: string | null;

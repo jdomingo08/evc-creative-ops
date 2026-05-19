@@ -20,4 +20,3 @@ export * from './openaiMessageInput';
 export * from './openaiRealtimeSession';
 export * from './openaiRealtimeTranscriptInput';
 export * from './openaiRealtimeTranscriptResult';
-export * from './openaiVoiceMessageInput';

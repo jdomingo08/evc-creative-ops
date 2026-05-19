@@ -176,29 +176,6 @@ paths:
           content:
             text/event-stream: {}
 
-  /openai/conversations/{id}/voice-messages:
-    post:
-      operationId: sendOpenaiVoiceMessage
-      tags: [openai]
-      summary: Send audio and receive a streaming voice+text response
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OpenaiVoiceMessageInput"
-      responses:
-        "200":
-          description: SSE stream of transcript and audio chunks
-          content:
-            text/event-stream: {}
-
   /handbook/status:
     get:
       operationId: getHandbookStatus
@@ -419,15 +396,6 @@ components:
           type: string
       required:
         - content
-
-    OpenaiVoiceMessageInput:
-      type: object
-      properties:
-        audio:
-          type: string
-          description: Base64-encoded audio data
-      required:
-        - audio
 
     HandbookStatus:
       type: object
