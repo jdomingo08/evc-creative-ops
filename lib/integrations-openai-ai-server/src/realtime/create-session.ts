@@ -31,7 +31,7 @@ export async function createRealtimeSession(
         type: "realtime",
         model: config.model,
         instructions: config.instructions,
-        output_modalities: ["audio", "text"],
+        output_modalities: ["audio"],
         audio: {
           input: {
             transcription: { model: "gpt-4o-mini-transcribe" },
