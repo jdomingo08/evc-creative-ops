@@ -20,20 +20,29 @@ export interface RealtimeSessionResult {
 export async function createRealtimeSession(
   config: RealtimeSessionConfig,
 ): Promise<RealtimeSessionResult> {
-  const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+  const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: config.model,
-      voice: config.voice,
-      modalities: ["audio", "text"],
-      turn_detection: null,
-      input_audio_transcription: { model: "gpt-4o-mini-transcribe" },
-      instructions: config.instructions,
-      tools: config.tools,
+      session: {
+        type: "realtime",
+        model: config.model,
+        instructions: config.instructions,
+        output_modalities: ["audio", "text"],
+        audio: {
+          input: {
+            transcription: { model: "gpt-4o-mini-transcribe" },
+            turn_detection: null,
+          },
+          output: {
+            voice: config.voice,
+          },
+        },
+        tools: config.tools,
+      },
     }),
   });
 
@@ -45,16 +54,18 @@ export async function createRealtimeSession(
   }
 
   const data = (await response.json()) as {
-    id: string;
-    model: string;
+    value: string;
     expires_at: number;
-    client_secret: { value: string; expires_at: number };
+    session: {
+      id: string;
+      model: string;
+    };
   };
 
   return {
-    ephemeralKey: data.client_secret.value,
-    sessionId: data.id,
-    model: data.model,
-    expiresAt: data.client_secret.expires_at,
+    ephemeralKey: data.value,
+    sessionId: data.session.id,
+    model: data.session.model,
+    expiresAt: data.expires_at,
   };
 }
