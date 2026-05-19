@@ -28,10 +28,14 @@ function parseDocIntoSections(text: string): HandbookSection[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
+    // Heading rules, in priority order:
+    // 1. Markdown prefix (## …) — emitted by extractTextFromGoogleDoc for Google Doc HEADING_* styles.
+    // 2. Strict ALL_CAPS line ≥4 chars — fallback for plain-text handbooks.
+    // The previous "short line ending in :" rule was removed — it mis-classified any sentence
+    // ending in a colon as a heading (e.g., "Growing core tools include but are not limited to:").
     const isHeading =
       /^#{1,4}\s/.test(trimmed) ||
-      /^[A-Z][A-Z\s&\-:,]{3,}$/.test(trimmed) ||
-      (trimmed.length < 80 && trimmed.endsWith(":") && !trimmed.includes("."));
+      /^[A-Z][A-Z\s&\-:,]{3,}$/.test(trimmed);
 
     if (isHeading && currentContent.length > 0) {
       sections.push({
@@ -78,7 +82,9 @@ function extractTextFromGoogleDoc(doc: any): string {
       }
 
       if (style.startsWith("HEADING_")) {
-        lines.push(text);
+        // Mark Google Doc headings with a Markdown prefix so parseDocIntoSections
+        // can identify them deterministically instead of guessing from text patterns.
+        lines.push(`## ${text}`);
       } else {
         lines.push(text);
       }
