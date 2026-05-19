@@ -12,10 +12,6 @@ vi.mock("@workspace/integrations-openai-ai-server", () => ({
   },
 }));
 
-vi.mock("@workspace/integrations-openai-ai-server/audio", () => ({
-  ensureCompatibleFormat: vi.fn(),
-}));
-
 vi.mock("@workspace/db", () => ({
   db: {
     select: vi.fn().mockReturnThis(),
