@@ -25,7 +25,21 @@ interface UseRealtimeSessionResult {
   stopSpeaking: () => void;
 }
 
-export function useRealtimeSession(conversationId: number): UseRealtimeSessionResult {
+export interface UseRealtimeSessionOptions {
+  /**
+   * Fires after a turn's user/assistant transcripts are persisted to the DB.
+   * Use this to invalidate any cached message list so the chat history refreshes.
+   */
+  onTurnPersisted?: () => void;
+}
+
+export function useRealtimeSession(
+  conversationId: number,
+  options: UseRealtimeSessionOptions = {},
+): UseRealtimeSessionResult {
+  const { onTurnPersisted } = options;
+  const onTurnPersistedRef = useRef(onTurnPersisted);
+  onTurnPersistedRef.current = onTurnPersisted;
   const [state, setState] = useState<RealtimeState>("idle");
   const [error, setError] = useState<Error | null>(null);
   const [userTranscript, setUserTranscript] = useState("");
@@ -80,25 +94,35 @@ export function useRealtimeSession(conversationId: number): UseRealtimeSessionRe
       if (!userText || !assistantText) return;
       const url = `/api/openai/conversations/${conversationId}/realtime/transcript`;
       const body = JSON.stringify({ userText, assistantText, citation });
+      let ok = false;
       try {
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body,
         });
-        if (!res.ok && res.status >= 500) {
+        if (res.ok) {
+          ok = true;
+        } else if (res.status >= 500) {
           await new Promise((r) => setTimeout(r, 1000));
           const retry = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body,
           });
-          if (!retry.ok) console.warn("Transcript save failed after retry:", retry.status);
-        } else if (!res.ok) {
+          if (retry.ok) {
+            ok = true;
+          } else {
+            console.warn("Transcript save failed after retry:", retry.status);
+          }
+        } else {
           console.warn("Transcript save failed:", res.status);
         }
       } catch (err) {
         console.warn("Transcript save threw:", err);
+      }
+      if (ok) {
+        onTurnPersistedRef.current?.();
       }
     },
     [conversationId],

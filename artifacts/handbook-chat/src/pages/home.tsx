@@ -24,18 +24,21 @@ import { cn } from "@/lib/utils";
 
 export default function Home() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+  const [pendingInput, setPendingInput] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: conversations, isLoading: isLoadingConvos } = useListOpenaiConversations();
   const createConversation = useCreateOpenaiConversation();
   const deleteConversation = useDeleteOpenaiConversation();
-  
-  const handleNewChat = () => {
+
+  const handleNewChat = (initialQuestion?: string) => {
+    const title = initialQuestion?.slice(0, 60) || "New Chat";
     createConversation.mutate(
-      { data: { title: "New Chat" } },
+      { data: { title } },
       {
         onSuccess: (newConvo) => {
           queryClient.invalidateQueries({ queryKey: getListOpenaiConversationsQueryKey() });
+          setPendingInput(initialQuestion ?? null);
           setActiveConversationId(newConvo.id);
         }
       }
@@ -44,11 +47,14 @@ export default function Home() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground font-sans">
-      <Sidebar 
-        conversations={conversations || []} 
-        activeId={activeConversationId} 
-        onSelect={setActiveConversationId}
-        onNew={handleNewChat}
+      <Sidebar
+        conversations={conversations || []}
+        activeId={activeConversationId}
+        onSelect={(id: number) => {
+          setPendingInput(null);
+          setActiveConversationId(id);
+        }}
+        onNew={() => handleNewChat()}
         isLoading={isLoadingConvos}
         onDelete={(id: number) => {
           deleteConversation.mutate({ id }, {
@@ -61,9 +67,13 @@ export default function Home() {
       />
       <div className="flex-1 flex flex-col min-w-0">
         {activeConversationId ? (
-          <ActiveChat conversationId={activeConversationId} />
+          <ActiveChat
+            conversationId={activeConversationId}
+            initialInput={pendingInput}
+            onInitialInputConsumed={() => setPendingInput(null)}
+          />
         ) : (
-          <EmptyChat onStart={handleNewChat} />
+          <EmptyChat onStartWithQuestion={handleNewChat} />
         )}
       </div>
     </div>
@@ -159,18 +169,40 @@ function Sidebar({ conversations, activeId, onSelect, onNew, isLoading, onDelete
   );
 }
 
-function ActiveChat({ conversationId }: { conversationId: number }) {
+function ActiveChat({
+  conversationId,
+  initialInput,
+  onInitialInputConsumed,
+}: {
+  conversationId: number;
+  initialInput?: string | null;
+  onInitialInputConsumed?: () => void;
+}) {
   const queryClient = useQueryClient();
   const { data: conversation, isLoading } = useGetOpenaiConversation(conversationId);
   const { data: messages, isLoading: isLoadingMsgs } = useListOpenaiMessages(conversationId);
-  
-  const [inputValue, setInputValue] = useState("");
+
+  const [inputValue, setInputValue] = useState(initialInput ?? "");
   const [isStreamingText, setIsStreamingText] = useState(false);
   const [streamedContent, setStreamedContent] = useState("");
   const [streamedCitation, setStreamedCitation] = useState<string | null>(null);
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
-  const voice = useRealtimeSession(conversationId);
+  const voice = useRealtimeSession(conversationId, {
+    onTurnPersisted: () => {
+      queryClient.invalidateQueries({ queryKey: getListOpenaiMessagesQueryKey(conversationId) });
+    },
+  });
+
+  // When a question is handed in from EmptyChat's starter buttons, pre-fill the textarea.
+  useEffect(() => {
+    if (initialInput && initialInput.length > 0) {
+      setInputValue(initialInput);
+      onInitialInputConsumed?.();
+    }
+    // initialInput is meant to fire once per conversation switch; consuming it clears it upstream.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialInput, conversationId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -395,7 +427,7 @@ function MessageBubble({ message }: { message: any }) {
   );
 }
 
-function EmptyChat({ onStart }: { onStart: () => void }) {
+function EmptyChat({ onStartWithQuestion }: { onStartWithQuestion: (q?: string) => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
@@ -418,7 +450,7 @@ function EmptyChat({ onStart }: { onStart: () => void }) {
           ].map((q, i) => (
             <button
               key={i}
-              onClick={onStart}
+              onClick={() => onStartWithQuestion(q)}
               className="p-4 rounded-xl border border-border/50 bg-secondary/30 hover:bg-secondary/80 hover:border-primary/50 transition-all group text-sm text-muted-foreground hover:text-foreground flex items-center justify-between"
             >
               <span>"{q}"</span>
